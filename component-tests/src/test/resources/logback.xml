@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<configuration scan="true" scanPeriod="30 seconds">
+
+	<timestamp key="timeStampAsString" datePattern="yyyyMMdd'T'HHmmss"/>
+
+	<appender name="fileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+		<File>${catalina.base}/logs/myclass.log</File> <!-- non-windows path -->
+
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>${catalina.base}/logs/myclass.%d{yyyy-MM-dd}.log</FileNamePattern>
+		</rollingPolicy>
+
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%date{YYYY-MM-dd HH:mm:ss.SSS,UTC},%date{YYYY-MM-dd HH:mm:ss.SSS},%level, [%thread] &#60;%mdc, className=%logger, methodName=%method&#62;, %logger{0} - %msg%n
+			</Pattern>
+		</layout>
+	</appender>
+	
+	  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+	    <encoder>
+	      <pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>
+	    </encoder>
+	  </appender>
+	
+	  <root level="DEBUG">
+	    <appender-ref ref="STDOUT" />
+	  </root>
+	
+	<appender name="fileAccessAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+		<File>${catalina.base}/logs/myclass-access.log</File> <!-- non-windows path -->
+
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%date{YYYY-MM-dd HH:mm:ss.SSS,UTC},%date{YYYY-MM-dd HH:mm:ss.SSS},%level,%logger, &#60;%mdc&#62; "%msg"%n
+			</Pattern>
+		</layout>
+	</appender>
+
+	<appender name="asyncAppender" class="ch.qos.logback.classic.AsyncAppender">
+		<param name="includeCallerData" value="true"/>
+		<appender-ref ref="fileAppender"/>
+	</appender>
+
+	
+	<root level="info">
+		<appender-ref ref="fileAppender" />
+	</root>	
+	
+</configuration>
