@@ -19,6 +19,13 @@ lein pom
 Make a choice. If you have play to the gallary, and don't want to disrupt your java .properties files based mechanism that is also fine else I will strongly recommened Clojure's edn. The data format used in Datomic.
 
 
+## _Disposability - stuart sierra's component_
+
+In clojure, the long awaiting answer I got to the state in the system was from Conj talk by Stuart Sierra. I was really confused on how will manage state in a big clojure app without it being messy or passing all the things all the time. This makes your program state easy to reason with, visible and start/stop at will. 
+
+link: https://github.com/stuartsierra/component
+
+
 ## _Logs - clj logging and logback_
 
 Configured clojure tools logging and logback.
