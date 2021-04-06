@@ -1,6 +1,7 @@
 package com.secure.files;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -59,13 +60,18 @@ public class SecureFileController implements HandlerExceptionResolver {
 	 */
 	@PostMapping(value = URL.UPLOAD)
 	@ResponseBody
-	public String upload(@RequestParam("file") final MultipartFile file, @RequestParam final String user)
-			throws IOException {
+	public String upload(@RequestParam("file") final MultipartFile file, @RequestParam final String user,
+			@RequestParam final String secret) throws IOException {
 		logger.info("upload post");
 		final String content = readFromInputStream(file.getInputStream());
 		logger.info("uploading user: {}, file: {}, content: {}", user, file.getOriginalFilename(), content);
-		secureFileService.add(user, getFileNameWithoutExtension(file.getOriginalFilename()), content);
+		secureFileService.add(user, file.getOriginalFilename(), secret, content);
 		return "success";
+	}
+
+	@GetMapping(value = URL.DOWNLOAD)
+	public String download(final Model model) {
+		return "download";
 	}
 
 	/**
@@ -74,12 +80,15 @@ public class SecureFileController implements HandlerExceptionResolver {
 	 * @param id
 	 * @return encrypted file
 	 */
-	@GetMapping(value = URL.DOWNLOAD, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@PostMapping(value = URL.DOWNLOAD, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@ResponseBody
-	public FileSystemResource download(@PathVariable final String user_id, @PathVariable final String file_id,
-			final HttpServletResponse response) throws IOException {
-		logger.info("downloing  user {}, file {}", user_id, file_id);
-		return new FileSystemResource(secureFileService.get(user_id, file_id));
+	public FileSystemResource download(@RequestParam("user") final String user, @RequestParam("file") final String file,
+			@RequestParam("secret") final String secret, final HttpServletResponse response) throws IOException {
+		logger.info("downloading  user {}, file {} secret {}", user, file, secret);
+		final File decFile = secureFileService.get(user, file, secret);
+		logger.info("decrypted file {}", decFile.getName());
+		response.setHeader("Content-Disposition", "attachment; filename=\"" + file + "\"");
+		return new FileSystemResource(decFile);
 	}
 
 	@Override
@@ -92,7 +101,7 @@ public class SecureFileController implements HandlerExceptionResolver {
 		return modelAndView;
 	}
 
-	private String readFromInputStream(final InputStream inputStream) throws IOException {
+	private static String readFromInputStream(final InputStream inputStream) throws IOException {
 		final StringBuilder resultStringBuilder = new StringBuilder();
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
 			String line;
@@ -101,13 +110,6 @@ public class SecureFileController implements HandlerExceptionResolver {
 			}
 		}
 		return resultStringBuilder.toString();
-	}
-
-	private String getFileNameWithoutExtension(final String name) {
-		if (name.indexOf(".") > 0) {
-			return name.substring(0, name.lastIndexOf("."));
-		}
-		return name;
 	}
 
 }

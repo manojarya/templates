@@ -10,11 +10,11 @@
 
 		<!-- TODO: Change the file name and location -->
 		<!-- <File>c:\logbackFile-${timeStampAsString}.csv</File> -->
-		<File>${catalina.base}/logs/venomservice.log</File> <!-- non-windows path -->
+		<File>${catalina.base}/logs/securefile.log</File> <!-- non-windows path -->
 
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- TODO: Change the file name -->
-			<FileNamePattern>${catalina.base}/logs/venomservice.%d{yyyy-MM-dd}.log</FileNamePattern>
+			<FileNamePattern>${catalina.base}/logs/securefile.%d{yyyy-MM-dd}.log</FileNamePattern>
 		</rollingPolicy>
 
 		<layout class="ch.qos.logback.classic.PatternLayout">

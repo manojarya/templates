@@ -2,10 +2,10 @@
 <%@ taglib prefix = "form" uri = "http://www.springframework.org/tags/form"%>
 <html>
    <head>
-      <title>Secure file upload</title>
+      <title>Secure file download</title>
    </head>
    <body>
-      <form:form method = "POST" action="upload" enctype = "multipart/form-data">
+      <form:form method = "POST" action="download">
          <table>
 	        <tr>
 	            <td>User Id</td>
@@ -16,11 +16,11 @@
 	            <td><input type="password" name="secret" /></td>
 	        </tr>
 	        <tr>
-	            <td>Select a file to upload</td>
-	            <td><input type="file" name="file" /></td>
+	            <td>File Name</td>
+	            <td><input type="text" name="file" /></td>
 	        </tr>
 	        <tr>
-	            <td><input type="submit" value="Upload" /></td>
+	            <td><input type="submit" value="Download" /></td>
 	        </tr>
 	    </table>
       </form:form>

@@ -15,9 +15,8 @@ public final class AppConstants {
 	/** Spring profiles. */
 	public static class URL {
 
-		public static final String SECURE_FILES = "/secure_files";
 		public static final String UPLOAD = "/upload";
-		public static final String DOWNLOAD = "users/{user_id}/download/{file_id}";
+		public static final String DOWNLOAD = "/download";
 
 		private URL() {
 		}

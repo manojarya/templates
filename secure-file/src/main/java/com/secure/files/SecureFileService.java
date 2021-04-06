@@ -5,13 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
-
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,61 +18,42 @@ public class SecureFileService {
 
 	private static final Logger logger = LoggerFactory.getLogger(SecureFileService.class);
 
-	private static final String ALGO = "AES";
-	private static final String TRANS = "AES/CBC/PKCS5Padding";
 	private static final String ENC = ".encrypted";
-	private static final String STAGING = "staging";
+	private static final String SOURCE = "source";
+	private static final String DOWNLOAD = "staging";
 
-	private final SecretKeyRepository secretKeyRepository;
 	private final String fileDrive;
 
 	@Autowired
-	public SecureFileService(@Value("${secure_files_directory}") final String fileDrive,
-			final SecretKeyRepository secretKeyRepository) {
+	public SecureFileService(@Value("${secure_files_directory}") final String fileDrive) {
 		this.fileDrive = fileDrive;
-		this.secretKeyRepository = secretKeyRepository;
-		new File(getStagingPath()).mkdirs();
+		this.mkDirs();
 	}
 
-	public void add(final String userId, final String fileId, final String content) {
+	public void add(final String userId, final String fileId, final String secret, final String content) {
 		try {
-			this.createUserDirectory(userId);
-			final SecretKey secretKey = KeyGenerator.getInstance(ALGO).generateKey();
-			final FileEncrypterDecrypter fileEncrypterDecrypter = new FileEncrypterDecrypter(secretKey, TRANS);
-			fileEncrypterDecrypter.encrypt(content, getFilePath(userId, fileId));
-			this.secretKeyRepository.saveKey(userId, fileId, secretKey);
-		} catch (final NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException ex) {
-			logger.error("file IO error ", ex);
-			throw new CipherException("file IO error", ex);
+			new File(this.fileDrive + File.separator + userId).mkdirs();
+			final File in = createFile(getSourceFilePath(fileId), content);
+			final File out = new File(getEncryptFilePath(userId, fileId));
+			FileLineEncrypterDecrypter.encryptLineByLine(secret, in, out);
+			logger.info("encrypted file is upload for user {} and file {}", userId, fileId);
+		} catch (final Exception ex) {
+			logger.error("error while adding file", ex);
+			throw new SecureFileOpException("error while adding file", ex);
 		}
 	}
 
-	public File get(final String userId, final String fileId) {
+	public File get(final String userId, final String fileId, final String secret) {
 		try {
-			final SecretKey secretKey = this.secretKeyRepository.getKey(userId, fileId);
-			final FileEncrypterDecrypter fileEncrypterDecrypter = new FileEncrypterDecrypter(secretKey, TRANS);
-			final String content = fileEncrypterDecrypter.decrypt(getFilePath(userId, fileId));
-			return createFile(getStagingFilePath(UUID.randomUUID().toString()), content);
-		} catch (final IOException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException ex) {
-			logger.error("file IO error ", ex);
-			throw new CipherException("file IO error", ex);
+			logger.info("fetching file is user {} and file {}", userId, fileId);
+			final File in = new File(getEncryptFilePath(userId, fileId));
+			final File out = new File(getDownloadFilePath(UUID.randomUUID().toString()));
+			FileLineEncrypterDecrypter.decryptLineByLine(secret, in, out);
+			return out;
+		} catch (final Exception ex) {
+			logger.error("error while fetching file ", ex);
+			throw new SecureFileOpException("error while fetching file", ex);
 		}
-	}
-
-	private String getFilePath(final String userId, final String fileId) {
-		return this.fileDrive + File.separator + userId + File.separator + fileId + ENC;
-	}
-
-	private void createUserDirectory(final String userId) {
-		new File(this.fileDrive + File.separator + userId).mkdirs();
-	}
-
-	private String getStagingPath() {
-		return this.fileDrive + File.separator + STAGING;
-	}
-
-	private String getStagingFilePath(final String name) {
-		return this.fileDrive + File.separator + STAGING + File.separator + name;
 	}
 
 	private File createFile(final String fileName, final String content) throws IOException {
@@ -86,6 +61,24 @@ public class SecureFileService {
 		final byte[] strToBytes = content.getBytes();
 		Files.write(path, strToBytes);
 		return new File(fileName);
+	}
+
+	private String getSourceFilePath(final String fileId) {
+		return this.fileDrive + File.separator + SOURCE + File.separator + fileId;
+	}
+
+	private String getEncryptFilePath(final String userId, final String fileId) {
+		return this.fileDrive + File.separator + userId + File.separator + fileId + ENC;
+	}
+
+	private String getDownloadFilePath(final String fileId) {
+		return this.fileDrive + File.separator + DOWNLOAD + File.separator + fileId;
+	}
+
+	private void mkDirs() {
+		new File(this.fileDrive).mkdirs();
+		new File(this.fileDrive + File.separator + SOURCE).mkdirs();
+		new File(this.fileDrive + File.separator + DOWNLOAD).mkdirs();
 	}
 
 }

@@ -17,15 +17,15 @@ public class FileEncrypterDecrypterIT {
 	@Test
 	public void encrypt_decrypt_file() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 
-		final SecretKeyRepository secretKeyRepository = new SecretKeyRepository("/tmp/secure_files/keys");
-		final SecureFileService service = new SecureFileService("/tmp/secure_files/files", secretKeyRepository);
+		final SecureFileService service = new SecureFileService("/tmp/secure_files/files");
 
-		final String userId = "u1";
+		final String userId = "manojarya";
 		final String fileId = "f1";
+		final String secret = "pass@123";
 		final String content = "my content bla bla blah";
-		service.add(userId, fileId, content);
+		service.add(userId, fileId, secret, content);
 
-		final File downloadedFile = service.get(userId, fileId);
+		final File downloadedFile = service.get(userId, fileId, secret);
 
 		logger.info("file {}", downloadedFile.getName());
 	}

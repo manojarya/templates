@@ -49,7 +49,7 @@ public class FileEncrypterDecrypter {
 			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 		} catch (final InvalidKeyException ex) {
 			logger.error("cipher encryption initialization error", ex);
-			throw new CipherException("cipher encryption initialization error", ex);
+			throw new SecureFileOpException("cipher encryption initialization error", ex);
 		}
 
 		final byte[] iv = cipher.getIV();
@@ -60,7 +60,7 @@ public class FileEncrypterDecrypter {
 			cipherOut.write(content.getBytes());
 		} catch (final IOException ex) {
 			logger.error("file IO error ", ex);
-			throw new CipherException("file IO error", ex);
+			throw new SecureFileOpException("file IO error", ex);
 		}
 	}
 
@@ -79,7 +79,7 @@ public class FileEncrypterDecrypter {
 				cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(fileIv));
 			} catch (InvalidKeyException | InvalidAlgorithmParameterException ex) {
 				logger.error("cipher decryption initialization error", ex);
-				throw new CipherException("cipher decryption initialization error", ex);
+				throw new SecureFileOpException("cipher decryption initialization error", ex);
 			}
 
 			try (CipherInputStream cipherIn = new CipherInputStream(fileIn, cipher);
@@ -95,7 +95,7 @@ public class FileEncrypterDecrypter {
 			}
 		} catch (final IOException e) {
 			logger.error("file decryption error- io exception", e);
-			throw new CipherException("file decryption error- io exception ", e);
+			throw new SecureFileOpException("file decryption error- io exception ", e);
 		}
 	}
 
