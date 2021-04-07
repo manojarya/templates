@@ -25,7 +25,7 @@ public class FileEncrypterDecrypterIT {
 		final String content = "my content bla bla blah";
 		service.add(userId, fileId, secret, content);
 
-		final File downloadedFile = service.get(userId, fileId, secret);
+		final File downloadedFile = service.get(userId, fileId, "p");
 
 		logger.info("file {}", downloadedFile.getName());
 	}

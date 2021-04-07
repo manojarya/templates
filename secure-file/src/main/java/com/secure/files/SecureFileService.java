@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import javax.crypto.BadPaddingException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +37,8 @@ public class SecureFileService {
 			new File(this.fileDrive + File.separator + userId).mkdirs();
 			final File in = createFile(getSourceFilePath(fileId), content);
 			final File out = new File(getEncryptFilePath(userId, fileId));
-			FileLineEncrypterDecrypter.encryptLineByLine(secret, in, out);
+			final FileLineEncrypterDecrypter fileEncrypterDecrypter = new FileLineEncrypterDecrypter(secret);
+			fileEncrypterDecrypter.encryptLineByLine(in, out);
 			logger.info("encrypted file is upload for user {} and file {}", userId, fileId);
 		} catch (final Exception ex) {
 			logger.error("error while adding file", ex);
@@ -48,8 +51,15 @@ public class SecureFileService {
 			logger.info("fetching file is user {} and file {}", userId, fileId);
 			final File in = new File(getEncryptFilePath(userId, fileId));
 			final File out = new File(getDownloadFilePath(UUID.randomUUID().toString()));
-			FileLineEncrypterDecrypter.decryptLineByLine(secret, in, out);
+			final FileLineEncrypterDecrypter fileEncrypterDecrypter = new FileLineEncrypterDecrypter(secret);
+			fileEncrypterDecrypter.decryptLineByLine(in, out);
 			return out;
+		} catch (final IOException ex) {
+			if (ex.getCause() instanceof BadPaddingException) {
+				logger.error("bad secret key", ex);
+				throw new SecureFileOpException("Invalid password for file", ex);
+			}
+			throw new SecureFileOpException("Error while fetching file", ex);
 		} catch (final Exception ex) {
 			logger.error("error while fetching file ", ex);
 			throw new SecureFileOpException("error while fetching file", ex);

@@ -21,10 +21,14 @@ public class FileLineEncrypterDecrypter {
 
 	private static final String UTF_8 = "UTF-8";
 
-	private static SecretKeySpec secretKey;
-	private static byte[] key;
+	private SecretKeySpec secretKey;
+	private byte[] key;
 
-	public static void setKey(final String myKey) {
+	FileLineEncrypterDecrypter(final String sercret) {
+		this.setKey(sercret);
+	}
+
+	private void setKey(final String myKey) {
 		MessageDigest sha = null;
 		try {
 			key = myKey.getBytes("UTF-8");
@@ -39,8 +43,7 @@ public class FileLineEncrypterDecrypter {
 		}
 	}
 
-	public static void encryptLineByLine(final String secret, final File in, final File out) throws Exception {
-		setKey(secret);
+	public void encryptLineByLine(final File in, final File out) throws Exception {
 		final Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 		cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 
@@ -54,8 +57,7 @@ public class FileLineEncrypterDecrypter {
 		}
 	}
 
-	public static void decryptLineByLine(final String secret, final File in, final File out) throws Exception {
-		setKey(secret);
+	public void decryptLineByLine(final File in, final File out) throws Exception {
 		final Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
 		cipher.init(Cipher.DECRYPT_MODE, secretKey);
 

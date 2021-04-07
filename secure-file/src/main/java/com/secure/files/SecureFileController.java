@@ -16,6 +16,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,8 +63,11 @@ public class SecureFileController implements HandlerExceptionResolver {
 	@PostMapping(value = URL.UPLOAD)
 	@ResponseBody
 	public String upload(@RequestParam("file") final MultipartFile file, @RequestParam final String user,
-			@RequestParam final String secret) throws IOException {
+			@RequestParam final String secret, final ModelMap model) throws IOException {
 		logger.info("upload post");
+		Assert.hasText(user, "User value is invalid");
+		Assert.hasText(secret, "Secret value is invalid");
+		Assert.hasText(file.getOriginalFilename(), "File value is invalid");
 		final String content = readFromInputStream(file.getInputStream());
 		logger.info("uploading user: {}, file: {}, content: {}", user, file.getOriginalFilename(), content);
 		secureFileService.add(user, file.getOriginalFilename(), secret, content);
@@ -84,6 +89,9 @@ public class SecureFileController implements HandlerExceptionResolver {
 	@ResponseBody
 	public FileSystemResource download(@RequestParam("user") final String user, @RequestParam("file") final String file,
 			@RequestParam("secret") final String secret, final HttpServletResponse response) throws IOException {
+		Assert.hasText(user, "User value is invalid");
+		Assert.hasText(secret, "Secret value is invalid");
+		Assert.hasText(file, "File value is invalid");
 		logger.info("downloading  user {}, file {} secret {}", user, file, secret);
 		final File decFile = secureFileService.get(user, file, secret);
 		logger.info("decrypted file {}", decFile.getName());
@@ -94,10 +102,19 @@ public class SecureFileController implements HandlerExceptionResolver {
 	@Override
 	public ModelAndView resolveException(final HttpServletRequest request, final HttpServletResponse response,
 			final Object object, final Exception exc) {
-		final ModelAndView modelAndView = new ModelAndView("file");
 		if (exc instanceof MaxUploadSizeExceededException) {
+			final ModelAndView modelAndView = new ModelAndView("file");
 			modelAndView.getModel().put("message", "File size exceeds limit!");
+			return modelAndView;
 		}
+		if (exc instanceof Exception) {
+			final ModelAndView modelAndView = new ModelAndView("error");
+			modelAndView.getModel().put("message", exc.getMessage());
+			return modelAndView;
+		}
+
+		final ModelAndView modelAndView = new ModelAndView("error");
+		modelAndView.getModel().put("message", "Internal server error");
 		return modelAndView;
 	}
 
